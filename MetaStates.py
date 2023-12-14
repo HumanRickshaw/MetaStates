@@ -122,18 +122,22 @@ def cumulativeLegal(df, s) :
 #For states and counties.
 def filterDF(df, geo, date, lref) :
 
-    if geo == "States" :
-        df = df[df.Date == date]
-    if geo == "Counties" :
-        df = df[df.NumericDate >= date]
-
     if lref == 'Media' :
-        df = df[df.Descriptor == "Media"]
-        print(df)
-        df.Link_Name = df.Link_Name.apply(lambda x: x if x == " " else x[0:50] + ". . .")
+        df = df[df.Descriptor == "Media"].copy()
+        df['Link_Name'] = df['Link_Name'].apply(lambda x: x if x == " " else x[0:50] + ". . .")
     else :
-        df = df[df.Descriptor != "Media"]
+        df = df[df.Descriptor != "Media"].copy()
         
+    if geo == "States" :
+        df = df[df.Date == date].copy()
+    else :
+        df = df[df.NumericDate >= date].copy()
+        for c in df.County :
+            #Get earliest date for a county
+            d = df[df.County == c]["Date"].to_list()[0]
+            #Merge all other counties with only that date of that county.
+            df = pd.concat([df[df.County != c],
+                            df[(df.County == c) & (df.Date == d)]])  
     return(df)
 ######End Helper Functions######
 
